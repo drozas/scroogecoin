@@ -131,11 +131,6 @@ public class TxHandler {
     	return true;
     }
 
-    /**
-     * Handles each epoch by receiving an unordered array of proposed transactions, checking each
-     * transaction for correctness, returning a mutually valid array of accepted transactions, and
-     * updating the current UTXO pool as appropriate.
-     */
     public Transaction[] handleTxs(Transaction[] possibleTxs) {
 
     	Transaction[] my_valid_txs = new Transaction[10000]; // This would be the maximum amount of transactions in the block to mine?
@@ -150,10 +145,19 @@ public class TxHandler {
         		valid_txs_index++;
         		// Y actualizo la pool con los outputs de cada input
         		
+                // Hago un primer for para sacar todos los inputs que me he gastado del pool (que es el estado general)
         		for (Transaction.Input input: tx.getInputs()) {
         			//Creo utxo temporal con el hash de la transaccion anterior y su output
                 	UTXO utxo = new UTXO(input.prevTxHash, input.outputIndex);
-                	//my_pool.addUTXO(uxto, my_pool.getTxOutput(utxo)); // THIS DOES NOT MAKE SENSE... ASK SEM point to possible Txs instead?
+                	my_pool.removeUTXO(utxo);
+                }
+                
+                // Hago un segundo for para anadir los outputs ya validados que se pueden gastar
+        		int output_index = 0;
+                for (Transaction.Output output: tx.getOutputs()) {
+                	UTXO utxo = new UTXO(tx.getHash(), output_index);
+                	my_pool.addUTXO(utxo,output);
+                	output_index++;
                 }
     		}
 
